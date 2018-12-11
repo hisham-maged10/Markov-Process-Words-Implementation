@@ -1,0 +1,45 @@
+public class MarkovWordOne extends AbstractMarkov
+{
+	public MarkovWordOne()
+	{
+		super(null,0);
+	}
+	public MarkovWordOne(int seed)
+	{
+		super(null,seed);
+	}
+	public MarkovWordOne(String[] words)
+	{
+		super(words,0);
+	}
+	public MarkovWordOne(String[] words,int seed)
+	{
+		super(words,seed);	
+	}
+	@Override
+	public String getRandomText(int numWords)
+	{
+		StringBuilder sb= new StringBuilder();
+		this.map=buildMap();	
+		int index=randomObj.nextInt(this.words.length-1);
+		String word=words[index];
+		sb.append(word+" ");
+		ArrayList<String> follows=null;
+		for(int i=0,n=numWords-1;i<n;i++)
+		{
+			follows=map.get(word);
+			if(follows.isEmpty())break;
+			index=randomObj.nextInt(follows.size());
+			word=follows.get(index);
+			sb.append(word+" ");	
+		}
+		return sb.toString().trim();
+	}
+	@Override
+	public String toString()
+	{
+		return "MarkovWord of Order 1";
+	}
+
+
+}

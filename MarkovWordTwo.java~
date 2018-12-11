@@ -1,0 +1,52 @@
+import java.util.HashMap;
+import java.util.ArrayList;
+public class MarkovWordTwo extends AbstractMarkov
+{
+	public MarkovWordTwo()
+	{
+		super(null,0);
+	}
+	public MarkovWordTwo(int seed)
+	{
+		super(null,seed);
+	}
+	public MarkovWordTwo(String[] words)
+	{
+		super(words,0);
+	}
+	public MarkovWordTwo(String[] words,int seed)
+	{
+		super(words,seed);	
+	}
+	@Override
+	public String getRandomText(int numWords)
+	{
+		StringBuilder sb= new StringBuilder();
+	//	this.map=buildMap();	
+		int index=randomObj.nextInt(this.words.length-2);
+		String[] targetWords={words[index],words[index+1]};
+	//	System.out.println("inside getRandomText");
+	//	for(String e:targetWords)
+	//		System.out.println(e);
+		sb.append(targetWords[0]+" "+targetWords[1]+" ");
+		ArrayList<String> follows=null;
+		for(int i=0,n=numWords-1;i<n;i++)
+		{
+			follows=this.getFollowSet(targetWords);
+			if(follows.isEmpty())break;
+			index=randomObj.nextInt(follows.size());
+			targetWords[0]=targetWords[1];
+			System.out.println(follows.get(index));
+			targetWords[1]=follows.get(index);
+			sb.append(targetWords[1]+" ");	
+		}
+		return sb.toString().trim();
+	}
+	@Override
+	public String toString()
+	{
+		return "MarkovWord of Order 1";
+	}
+
+
+}

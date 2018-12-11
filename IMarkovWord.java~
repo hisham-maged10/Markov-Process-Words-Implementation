@@ -1,0 +1,5 @@
+public interface IMarkovWord
+{
+	public void setTrainingText(String text);
+	public void setRandom(int seed);
+}

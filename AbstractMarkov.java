@@ -1,0 +1,151 @@
+/**
+ * @author ${hisham_maged10}
+ *https://github.com/hisham-maged10
+ * ${DesktopApps}
+ */
+import java.util.Random;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.IOException;
+import java.io.File;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.HashMap;
+import java.util.ArrayList;
+public abstract class AbstractMarkov implements IMarkovWord
+{
+	protected String[] words;
+	protected Random randomObj;
+	protected HashMap<WordGram,ArrayList<String>> map;
+	public AbstractMarkov()
+	{
+		this(null,0);
+	}
+	public AbstractMarkov(int seed)
+	{
+		this(null,seed);
+	}
+	public AbstractMarkov(String[] words)
+	{
+		this(words,0);
+	}
+	public AbstractMarkov(String[] words,int seed)
+	{
+		this.words=words==null?getWords(null):words;
+		this.randomObj=seed==0?new Random(System.currentTimeMillis()):new Random(seed);
+	}
+	@Override
+	public void setTrainingText(String text)
+	{
+		this.words=text.trim().replaceAll(" +"," ").replace('\n',' ').trim().split("\\s+");
+	}
+	@Override
+	public void setRandom(int seed)
+	{
+		this.randomObj.setSeed(seed);
+	}
+	protected File getFile()
+	{
+		JFileChooser chooser=new JFileChooser();
+		chooser.setFileFilter(new FileNameExtensionFilter("Text Files","txt","TXT"));
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		chooser.setCurrentDirectory(new File("."));
+		File file;
+		try{
+		do
+		{
+			System.out.println("Chooser a TEXT FILE to Train on!");
+			chooser.showOpenDialog(null);
+		}while((file=chooser.getSelectedFile())==null);
+		}catch(NullPointerException ex){System.out.println("Incorrect Respone!"); return getFile();}
+		return file;
+	}
+	protected String getContent(File file)
+	{
+		StringBuilder sb=new StringBuilder();
+		try(BufferedReader reader=new BufferedReader(new FileReader(file));)
+		{
+			String line;
+			while((line=reader.readLine())!=null)
+				sb.append(line+'\n');
+
+		}catch(IOException ex){System.out.println("An Error occured!!"); ex.printStackTrace();}
+		return sb.toString().trim().replaceAll(" +"," ").replace('\n',' ').trim();
+	}
+	protected String[] getWords(File file)
+	{
+		return getContent(file==null?(file=getFile()):file).split("\\s+");
+	}
+	protected int indexOf(WordGram target,int start)
+	{
+		for(int i=start;i<this.words.length;i++)
+		{
+			if(indexOfHelper(target,i))
+				return i;
+		}
+		return -1;
+	}
+	protected boolean indexOfHelper(WordGram targets,int currIndex)
+	{
+		for(int i=0,n=targets.length();i<n;i++)
+		{
+			if((currIndex+i)>(this.words.length-1))return false;
+			if(!this.words[currIndex+i].equals(targets.wordAt(i)))
+				return false;
+	
+		}
+		return true;
+	}
+	protected ArrayList<String> getFollowSet(WordGram word)
+	{
+		ArrayList<String> wordsArr=new ArrayList<>();
+		int index=0;
+		int maxLength=this.words.length-1;
+		while((index=indexOf(word,index))!=-1)
+		{
+			if((index+=word.length())>maxLength)
+				break;
+			
+			wordsArr.add(this.words[index]);
+		}
+		return wordsArr;
+	}
+	protected HashMap<WordGram,ArrayList<String>> buildMap()
+	{
+		HashMap<WordGram,ArrayList<String>> builtMap=new HashMap<>();
+		String sub=(sub=this.toString()).substring(sub.length()-1);
+		int order=Integer.parseInt(sub);
+		int index=0;
+		String[] targetWords=new String[order];
+		for(int i=0;i<targetWords.length;i++)
+			targetWords[i]=this.words[index++];
+		WordGram wg=new WordGram(targetWords);
+		for(int i=0;i<this.words.length;i++)
+		{
+			if(!builtMap.containsKey(wg))
+				builtMap.put(wg,getFollowSet(wg));
+			if(index>this.words.length-1)
+				break;
+			wg=wg.shiftAdd(this.words[index++]);
+		}
+		int maxSize=0;
+		for(WordGram e:builtMap.keySet())
+		{
+			//System.out.println("Key: "+e+" set: "+builtMap.get(e));
+			if(maxSize<builtMap.get(e).size())
+				maxSize=builtMap.get(e).size();
+		}
+		System.out.println("number of keys: "+builtMap.size());
+		System.out.println("Largest value in the HashMap: "+maxSize);
+		/*System.out.println("Keys that have the largest values:-");
+		for(WordGram e:builtMap.keySet())
+		{
+			if(maxSize==builtMap.get(e).size())
+			System.out.println("Key: "+e);
+		}
+		*/
+		return builtMap;
+	}
+	public abstract String getRandomText(int numWords);
+	
+}
